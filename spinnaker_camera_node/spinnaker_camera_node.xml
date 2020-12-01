@@ -1,0 +1,10 @@
+<library path="lib/libspinnaker_camera_nodelet">
+
+  <class name="autoware/drivers/camera/spinnaker_camera_node"
+         type="autoware::drivers::camera::SpinnakerCameraNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+    </description>
+  </class>
+
+</library>

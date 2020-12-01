@@ -16,18 +16,17 @@
 #define SPINNAKER_CAMERA_DRIVER__CAMERA_LIST_WRAPPER_HPP_
 
 #ifndef DOXYGEN_SKIP
-#include <spinnaker/Spinnaker.h>
+#include <Spinnaker.h>
 #endif
 
-#include <sensor_msgs/msg/image.hpp>
 #include <spinnaker_camera_driver/camera_wrapper.hpp>
 #include <spinnaker_camera_driver/visibility_control.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
-#include <functional>
 
 namespace autoware
 {
@@ -41,7 +40,6 @@ namespace camera
 /// \brief Contains everything related to Spinnaker SDK.
 namespace spinnaker
 {
-
 /// A class that wraps a Spnnaker SDK list of cameras.
 ///
 /// It handles the lifetimes of the list of cameras, making sure the cameras are released
@@ -51,13 +49,11 @@ class SPINNAKER_CAMERA_PUBLIC CameraListWrapper
 public:
   /// Create the list wrapper and assign the same camera_settings to each camera.
   explicit CameraListWrapper(
-    Spinnaker::CameraList camera_list,
-    const CameraSettings & camera_settings);
+    Spinnaker::CameraList camera_list, const CameraSettings & camera_settings);
 
   /// Create the list wrapper with a camera_settings instance for each camera.
   explicit CameraListWrapper(
-    Spinnaker::CameraList camera_list,
-    const std::vector<CameraSettings> & camera_settings);
+    Spinnaker::CameraList camera_list, const std::vector<CameraSettings> & camera_settings);
 
   /// We need a custom destructor as the camera list need to be cleared.
   virtual ~CameraListWrapper();
@@ -75,15 +71,17 @@ public:
   /// Start capturing on all cameras.
   void start_capturing();
 
+  /// Start capturing on one camera.
+  void start_capturing(const int index);
+
   /// Stop capturing on all cameras.
   void stop_capturing();
 
-  /// Retreive latest available image from a camera.
-  std::unique_ptr<sensor_msgs::msg::Image> retreive_image_from_camera(
-    const std::uint32_t camera_index) const;
+  /// Stop capturing on one camera.
+  void stop_capturing(const int index);
 
   /// Get number of cameras.
-  inline std::size_t get_number_of_cameras() const {return m_cameras.size();}
+  inline std::size_t get_number_of_cameras() const { return m_cameras.size(); }
 
   /// Set a function that is going to be called when an image arrives.
   void set_image_callback(CameraWrapper::ImageCallbackFunction callback);

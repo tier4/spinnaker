@@ -15,12 +15,11 @@
 #ifndef SPINNAKER_CAMERA_DRIVER__CAMERA_SETTINGS_HPP_
 #define SPINNAKER_CAMERA_DRIVER__CAMERA_SETTINGS_HPP_
 
-#include <common/types.hpp>
 #include <spinnaker_camera_driver/visibility_control.hpp>
 
-#include <string>
 #include <set>
 #include <stdexcept>
+#include <string>
 
 namespace autoware
 {
@@ -30,7 +29,6 @@ namespace camera
 {
 namespace spinnaker
 {
-
 /// Encapsulate settings that make sense to pass to a camera.
 class SPINNAKER_CAMERA_PUBLIC CameraSettings
 {
@@ -46,27 +44,34 @@ public:
 
   /// Instantiate settings and throw if they are not valid.
   explicit CameraSettings(
-    std::uint32_t window_width,
-    std::uint32_t window_height,
-    common::types::float64_t fps,
-    const std::string & pixel_format,
-    const std::string & frame_id = "camera",
-    std::int64_t device_link_throughput_limit = 100000000L);
+    const std::string & camera_name, std::uint32_t window_width, std::uint32_t window_height,
+    float fps, const std::string & pixel_format, const std::string & frame_id = "camera",
+    std::uint32_t serial_number = 0, const std::string & camera_info_url = "",
+    std::int64_t device_link_throughput_limit = 100000000L, bool use_external_trigger = false,
+    int trigger_line_source = 0, float gain_upper_limit = 18.0);
 
-  inline std::uint32_t get_window_width() const noexcept {return m_window_width;}
-  inline std::uint32_t get_window_height() const noexcept {return m_window_height;}
-  inline const std::string & get_pixel_format() const noexcept {return m_pixel_format;}
-  inline const std::string & get_frame_id() const noexcept {return m_frame_id;}
-  inline common::types::float64_t get_fps() const noexcept {return m_fps;}
+  inline const std::string & get_camera_name() const noexcept { return m_camera_name; }
+  inline std::uint32_t get_window_width() const noexcept { return m_window_width; }
+  inline std::uint32_t get_window_height() const noexcept { return m_window_height; }
+  inline const std::string & get_pixel_format() const noexcept { return m_pixel_format; }
+  inline const std::string & get_frame_id() const noexcept { return m_frame_id; }
+  inline float get_fps() const noexcept { return m_fps; }
+  inline std::uint32_t get_serial_number() const noexcept { return m_serial_number; }
+  inline std::string get_camera_info_url() const noexcept { return m_camera_info_url; }
   inline std::int64_t get_device_link_throughput_limit() const noexcept
   {
     return m_device_link_throughput_limit;
   }
+  inline bool get_use_external_trigger() const noexcept { return m_use_external_trigger; }
+  inline int get_trigger_line_source() const noexcept { return m_trigger_line_source; }
+  inline float get_gain_upper_limit() const noexcept { return m_gain_upper_limit; }
 
 private:
   /// A set of all valid pixel formats.
   static const std::set<std::string> kValidPixelFormats;
 
+  /// Camera name
+  std::string m_camera_name;
   /// Width of the returned image.
   std::uint32_t m_window_width;
   /// Height of the returned image.
@@ -79,16 +84,27 @@ private:
   std::string m_frame_id;
 
   /// Wanted fps.
-  common::types::float64_t m_fps;
+  float m_fps;
+
+  /// Camera serial number
+  uint32_t m_serial_number;
+
+  /// Camera info url
+  std::string m_camera_info_url;
 
   /// Desired device link throuput limit.
   std::int64_t m_device_link_throughput_limit;
-};
 
-}  //  namespace spinnaker
-}  //  namespace camera
-}  //  namespace drivers
+  bool m_use_external_trigger;
+
+  int m_trigger_line_source;
+
+  float m_gain_upper_limit;
+};  // namespace spinnaker
+
+}  // namespace spinnaker
+}  // namespace camera
+}  // namespace drivers
 }  //  namespace autoware
-
 
 #endif  // SPINNAKER_CAMERA_DRIVER__CAMERA_SETTINGS_HPP_

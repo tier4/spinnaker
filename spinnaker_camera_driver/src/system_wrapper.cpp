@@ -14,8 +14,8 @@
 
 #include <spinnaker_camera_driver/system_wrapper.hpp>
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace autoware
 {
@@ -25,9 +25,7 @@ namespace camera
 {
 namespace spinnaker
 {
-
-SystemWrapper::SystemWrapper()
-: m_system{Spinnaker::System::GetInstance()} {}
+SystemWrapper::SystemWrapper() : m_system{Spinnaker::System::GetInstance()} {}
 
 SystemWrapper::~SystemWrapper()
 {
@@ -36,8 +34,7 @@ SystemWrapper::~SystemWrapper()
   m_system->ReleaseInstance();
 }
 
-CameraListWrapper & SystemWrapper::create_cameras(
-  const CameraSettings & camera_settings)
+CameraListWrapper & SystemWrapper::create_cameras(const CameraSettings & camera_settings)
 {
   if (m_camera_list) {
     throw std::logic_error("Camera list already initialized. Cannot create cameras again.");
@@ -63,7 +60,6 @@ CameraListWrapper & SystemWrapper::get_cameras()
   }
   return *m_camera_list;
 }
-
 
 }  //  namespace spinnaker
 }  //  namespace camera

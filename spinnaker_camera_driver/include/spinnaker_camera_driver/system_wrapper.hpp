@@ -16,7 +16,7 @@
 #define SPINNAKER_CAMERA_DRIVER__SYSTEM_WRAPPER_HPP_
 
 #ifndef DOXYGEN_SKIP
-#include <spinnaker/Spinnaker.h>
+#include <Spinnaker.h>
 #endif
 
 #include <spinnaker_camera_driver/camera_list_wrapper.hpp>
@@ -33,7 +33,6 @@ namespace camera
 {
 namespace spinnaker
 {
-
 /// A class that wraps the Spinnaker SDK system pointer and handles its correct release.
 class SPINNAKER_CAMERA_PUBLIC SystemWrapper
 {
@@ -45,12 +44,10 @@ public:
   ~SystemWrapper();
 
   /// Get a list of all connected cameras and configure them with the same settings.
-  CameraListWrapper & create_cameras(
-    const CameraSettings & camera_settings);
+  CameraListWrapper & create_cameras(const CameraSettings & camera_settings);
 
   /// Get a list of all connected cameras with settings instance per camera.
-  CameraListWrapper & create_cameras(
-    const std::vector<CameraSettings> & camera_settings);
+  CameraListWrapper & create_cameras(const std::vector<CameraSettings> & camera_settings);
 
   /// Get available camera list.
   CameraListWrapper & get_cameras();

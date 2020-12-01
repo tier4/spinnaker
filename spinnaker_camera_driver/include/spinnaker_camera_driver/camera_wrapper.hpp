@@ -16,16 +16,15 @@
 #define SPINNAKER_CAMERA_DRIVER__CAMERA_WRAPPER_HPP_
 
 #ifndef DOXYGEN_SKIP
-#include <spinnaker/Spinnaker.h>
+#include <Spinnaker.h>
 #endif
 
 #include <spinnaker_camera_driver/camera_settings.hpp>
 #include <spinnaker_camera_driver/visibility_control.hpp>
-#include <sensor_msgs/msg/image.hpp>
 
+#include <functional>
 #include <memory>
 #include <string>
-#include <functional>
 
 namespace autoware
 {
@@ -35,7 +34,6 @@ namespace camera
 {
 namespace spinnaker
 {
-
 /// A wrapper around the Spinnaker camera.
 ///
 /// It handles correct creation and destruction of the camera along with handling
@@ -44,20 +42,16 @@ class SPINNAKER_CAMERA_PUBLIC CameraWrapper : public Spinnaker::ImageEventHandle
 {
 public:
   /// A typedef for the callback function used to return an image message to the user.
-  using ImageCallbackFunction = std::function<void (
-        std::uint32_t,
-        std::unique_ptr<sensor_msgs::msg::Image>)>;
+  using ImageCallbackFunction =
+    std::function<void(std::uint32_t, const std::string &, const Spinnaker::ImagePtr &)>;
 
   /// Construct a camera that wraps the spinnaker camera pointer.
   explicit CameraWrapper(
-    std::uint32_t camera_index,
-    const Spinnaker::CameraPtr & camera,
+    std::uint32_t camera_index, const Spinnaker::CameraPtr & camera,
     const CameraSettings & camera_settings);
 
   /// Construct a camera that wraps the spinnaker camera pointer.
-  explicit CameraWrapper(
-    std::uint32_t camera_index,
-    const Spinnaker::CameraPtr & camera);
+  explicit CameraWrapper(std::uint32_t camera_index, const Spinnaker::CameraPtr & camera);
 
   /// Properly destroys the camera.
   ~CameraWrapper() override;
@@ -77,9 +71,6 @@ public:
   /// Configure a Spinnaker camera.
   void configure_camera(const CameraSettings & camera_settings);
 
-  /// Retreive latest available image.
-  std::unique_ptr<sensor_msgs::msg::Image> retreive_image() const;
-
   /// Start capturing on all cameras.
   void start_capturing();
 
@@ -90,15 +81,12 @@ public:
   void set_on_image_callback(ImageCallbackFunction callback);
 
 private:
-  /// Convert Spinnaker image to image message.
-  static std::unique_ptr<sensor_msgs::msg::Image> convert_to_image_msg(
-    const Spinnaker::ImagePtr & image, const std::string & frame_id);
-
   /// Convert a configuration string to Spinnaker PixelFormat enum.
   static Spinnaker::PixelFormatEnums convert_to_pixel_format_enum(const std::string & pixel_format);
   /// Convert Spinnaker PixelFormat enum to string.
   static std::string convert_to_pixel_format_string(Spinnaker::PixelFormatEnums pixel_format);
-
+  /// Convert line number to Spinnaker TriggerSource enum.
+  static Spinnaker::TriggerSourceEnums convert_to_trigger_source_enum(const int line_source);
   /// Index of the current camera.
   std::uint32_t m_camera_index{};
   /// A handle to the Spinnaker camera pointer.

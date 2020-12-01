@@ -1,0 +1,34 @@
+# This is a template parameter file which can be copied and modified for
+# a specific implementation
+#
+# There are two options for providing camera settings:
+# 1. - Do not specify "cameras setting"
+#    - Put a single camera settings entry under "camera_settings", e.g.:
+#      camera_settings:
+#        window_width: 1280
+#        window_height: 1080
+#        fps: 60.0
+#        pixel_format: rgb8
+#
+# 2. - Set "cameras" entry to a list of camera names that you like.
+#    - A settings entity for each camera under "camera_settings".
+---
+
+spinnaker_camera_node:
+  ros__parameters:
+    cameras: ["camera"]
+    # If true, there is going to be a publisher with a different topic per camera.
+    # Otherwise a single publisher will be reused for all cameras.
+    one_publisher_per_camera: true
+    camera_settings:
+      camera:
+        window_width: 1440
+        window_height: 1080
+        fps: 20.0
+        # pixel_format can be one of:
+        # bayer_rggb8, bayer_grbg8, bayer_gbrg8, bayer_bggr8, rgb8, bgr8, mono8
+        pixel_format: bgr8
+        frame_id: camera  # optional
+        serial_number: 18486909
+        device_link_throughput_limit: 100000000  # optional
+        camera_info_url: package://spinnaker_camera_node/param/camera_info.yaml

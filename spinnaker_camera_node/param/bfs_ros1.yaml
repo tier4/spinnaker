@@ -1,0 +1,11 @@
+cameras: ["camera"]
+camera_settings:
+  camera: 
+    window_width: 1440
+    window_height: 1080
+    fps: 20.0
+    pixel_format: bgr8
+    frame_id: camera0
+    serial_number: 18486909
+    device_link_throughput_limit: 100000000
+    camera_info_url: package://spinnaker_camera_node/param/camera_info.yaml

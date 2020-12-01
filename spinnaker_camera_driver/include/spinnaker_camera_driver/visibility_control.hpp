@@ -17,21 +17,21 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(__WIN32)
-  #if defined(SPINNAKER_CAMERA_BUILDING_DLL) || defined(SPINNAKER_CAMERA_EXPORTS)
-    #define SPINNAKER_CAMERA_PUBLIC __declspec(dllexport)
-    #define SPINNAKER_CAMERA_LOCAL
-  #else  // defined(SPINNAKER_CAMERA_BUILDING_DLL) || defined(SPINNAKER_CAMERA_EXPORTS)
-    #define SPINNAKER_CAMERA_PUBLIC __declspec(dllimport)
-    #define SPINNAKER_CAMERA_LOCAL
-  #endif  // defined(SPINNAKER_CAMERA_BUILDING_DLL) || defined(SPINNAKER_CAMERA_EXPORTS)
+#if defined(SPINNAKER_CAMERA_BUILDING_DLL) || defined(SPINNAKER_CAMERA_EXPORTS)
+#define SPINNAKER_CAMERA_PUBLIC __declspec(dllexport)
+#define SPINNAKER_CAMERA_LOCAL
+#else  // defined(SPINNAKER_CAMERA_BUILDING_DLL) || defined(SPINNAKER_CAMERA_EXPORTS)
+#define SPINNAKER_CAMERA_PUBLIC __declspec(dllimport)
+#define SPINNAKER_CAMERA_LOCAL
+#endif  // defined(SPINNAKER_CAMERA_BUILDING_DLL) || defined(SPINNAKER_CAMERA_EXPORTS)
 #elif defined(__linux__)
-  #define SPINNAKER_CAMERA_PUBLIC __attribute__((visibility("default")))
-  #define SPINNAKER_CAMERA_LOCAL __attribute__((visibility("hidden")))
+#define SPINNAKER_CAMERA_PUBLIC __attribute__((visibility("default")))
+#define SPINNAKER_CAMERA_LOCAL __attribute__((visibility("hidden")))
 #elif defined(__APPLE__)
-  #define SPINNAKER_CAMERA_PUBLIC __attribute__((visibility("default")))
-  #define SPINNAKER_CAMERA_LOCAL __attribute__((visibility("hidden")))
+#define SPINNAKER_CAMERA_PUBLIC __attribute__((visibility("default")))
+#define SPINNAKER_CAMERA_LOCAL __attribute__((visibility("hidden")))
 #else  // defined(_LINUX)
-  #error "Unsupported Build Configuration"
+#error "Unsupported Build Configuration"
 #endif  // defined(_WINDOWS)
 
 #endif  // SPINNAKER_CAMERA_DRIVER__VISIBILITY_CONTROL_HPP_

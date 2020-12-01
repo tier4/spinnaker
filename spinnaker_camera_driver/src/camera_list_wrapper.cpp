@@ -14,15 +14,12 @@
 
 #include <spinnaker_camera_driver/camera_list_wrapper.hpp>
 
-#include <sensor_msgs/msg/image.hpp>
-#include <std_msgs/msg/header.hpp>
-
 #include <cstdint>
-#include <memory>
-#include <vector>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <utility>
+#include <vector>
 
 namespace autoware
 {
@@ -32,10 +29,8 @@ namespace camera
 {
 namespace spinnaker
 {
-
 CameraListWrapper::CameraListWrapper(
-  Spinnaker::CameraList camera_list,
-  const CameraSettings & camera_settings)
+  Spinnaker::CameraList camera_list, const CameraSettings & camera_settings)
 : m_camera_list{camera_list}
 {
   for (std::uint32_t camera_index = 0; camera_index < m_camera_list.GetSize(); ++camera_index) {
@@ -44,22 +39,29 @@ CameraListWrapper::CameraListWrapper(
 }
 
 CameraListWrapper::CameraListWrapper(
-  Spinnaker::CameraList camera_list,
-  const std::vector<CameraSettings> & camera_settings)
+  Spinnaker::CameraList camera_list, const std::vector<CameraSettings> & camera_settings)
 : m_camera_list{camera_list}
 {
   if (camera_settings.size() != m_camera_list.GetSize()) {
     throw std::logic_error("Number of settings does not match the number of available cameras.");
   }
   for (std::uint32_t camera_index = 0; camera_index < m_camera_list.GetSize(); ++camera_index) {
-    m_cameras.emplace_back(camera_index,
-      m_camera_list.GetByIndex(camera_index),
-      camera_settings[camera_index]);
+    auto camera_ptr =
+      m_camera_list.GetBySerial(std::to_string(camera_settings[camera_index].get_serial_number()));
+    if (!camera_ptr) {
+      throw std::runtime_error(
+        "Cannot find a camera whose serial number is " +
+        std::to_string(camera_settings[camera_index].get_serial_number()));
+    } else {
+      m_cameras.emplace_back(camera_index, camera_ptr, camera_settings[camera_index]);
+    }
   }
 }
 
 CameraListWrapper::~CameraListWrapper()
 {
+  // Stop all cameras.
+  stop_capturing();
   // First destroy all the cameras using their destructors.
   m_cameras.clear();
   // Now clear the camera list that actually destoys the last instances of the cameras.
@@ -73,6 +75,8 @@ void CameraListWrapper::start_capturing()
   }
 }
 
+void CameraListWrapper::start_capturing(const int index) { m_cameras.at(index).start_capturing(); }
+
 void CameraListWrapper::stop_capturing()
 {
   for (auto & camera : m_cameras) {
@@ -80,17 +84,13 @@ void CameraListWrapper::stop_capturing()
   }
 }
 
+void CameraListWrapper::stop_capturing(const int index) { m_cameras.at(index).stop_capturing(); }
+
 void CameraListWrapper::set_image_callback(CameraWrapper::ImageCallbackFunction callback)
 {
   for (auto & camera : m_cameras) {
     camera.set_on_image_callback(callback);
   }
-}
-
-std::unique_ptr<sensor_msgs::msg::Image> CameraListWrapper::retreive_image_from_camera(
-  const std::uint32_t camera_index) const
-{
-  return m_cameras.at(camera_index).retreive_image();
 }
 
 }  //  namespace spinnaker

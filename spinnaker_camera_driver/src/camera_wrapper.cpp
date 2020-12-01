@@ -12,20 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-#include <spinnaker_camera_driver/camera_wrapper.hpp>
 #include <spinnaker_camera_driver/camera_settings.hpp>
+#include <spinnaker_camera_driver/camera_wrapper.hpp>
 
-#include <spinnaker/Spinnaker.h>
+#include <Spinnaker.h>
 
 #include <memory>
 #include <string>
-
-namespace
-{
-constexpr std::uint64_t kNanoSecondsInSecond = 1000000000U;
-}  // namespace
-
 
 namespace autoware
 {
@@ -35,19 +28,14 @@ namespace camera
 {
 namespace spinnaker
 {
-
-CameraWrapper::CameraWrapper(
-  std::uint32_t camera_index,
-  const Spinnaker::CameraPtr & camera)
-: m_camera_index{camera_index},
-  m_camera{camera}
+CameraWrapper::CameraWrapper(std::uint32_t camera_index, const Spinnaker::CameraPtr & camera)
+: m_camera_index{camera_index}, m_camera{camera}
 {
   m_camera->Init();
 }
 
 CameraWrapper::CameraWrapper(
-  std::uint32_t camera_index,
-  const Spinnaker::CameraPtr & camera,
+  std::uint32_t camera_index, const Spinnaker::CameraPtr & camera,
   const CameraSettings & camera_settings)
 : CameraWrapper{camera_index, camera}
 {
@@ -60,7 +48,7 @@ CameraWrapper::~CameraWrapper()
     m_camera->UnregisterEventHandler(*this);
   }
   if (m_camera->IsStreaming()) {
-    m_camera->AcquisitionStop();
+    stop_capturing();
   }
   m_camera->DeInit();
 }
@@ -68,20 +56,9 @@ CameraWrapper::~CameraWrapper()
 void CameraWrapper::OnImageEvent(Spinnaker::ImagePtr image)
 {
   if (m_on_image_callback) {
-    m_on_image_callback(m_camera_index, convert_to_image_msg(image, m_frame_id));
+    m_on_image_callback(m_camera_index, m_frame_id, image);
     image->Release();
   }
-}
-
-std::unique_ptr<sensor_msgs::msg::Image> CameraWrapper::retreive_image() const
-{
-  if (m_on_image_callback) {
-    throw std::logic_error("A callback is set, please use it to retreive images.");
-  }
-  auto image = m_camera->GetNextImage();
-  auto image_msg = convert_to_image_msg(image, m_frame_id);
-  image->Release();
-  return image_msg;
 }
 
 void CameraWrapper::start_capturing()
@@ -89,14 +66,26 @@ void CameraWrapper::start_capturing()
   if (!m_is_camera_configured) {
     throw std::logic_error("Please configure the camera before capturing images.");
   }
-  m_camera->BeginAcquisition();
-  m_camera_is_capturing = true;
+  try {
+    if (m_camera && !m_camera_is_capturing) {
+      m_camera->BeginAcquisition();
+      m_camera_is_capturing = true;
+    }
+  } catch (const Spinnaker::Exception & e) {
+    throw std::runtime_error("Failed to start capture: " + std::string(e.what()));
+  }
 }
 
 void CameraWrapper::stop_capturing()
 {
-  m_camera->EndAcquisition();
-  m_camera_is_capturing = false;
+  if (m_camera && m_camera_is_capturing) {
+    try {
+      m_camera->EndAcquisition();
+      m_camera_is_capturing = false;
+    } catch (const Spinnaker::Exception & e) {
+      throw std::runtime_error("Failed to stop capture: " + std::string(e.what()));
+    }
+  }
 }
 
 void CameraWrapper::set_on_image_callback(ImageCallbackFunction callback)
@@ -107,36 +96,6 @@ void CameraWrapper::set_on_image_callback(ImageCallbackFunction callback)
     m_camera->RegisterEventHandler(*this);
   }
   m_on_image_callback = callback;
-}
-
-std::unique_ptr<sensor_msgs::msg::Image> CameraWrapper::convert_to_image_msg(
-  const Spinnaker::ImagePtr & image, const std::string & frame_id)
-{
-  if (image->IsIncomplete()) {
-    std::cerr << "Received an incomplete image. Skipping." << std::endl;
-    return nullptr;
-  }
-  auto acquisition_time = image->GetTimeStamp();
-
-  const std::string encoding_pattern = convert_to_pixel_format_string(image->GetPixelFormat());
-  const auto seconds = acquisition_time / kNanoSecondsInSecond;
-  std_msgs::msg::Header header;
-  header.stamp.sec = static_cast<std::int32_t>(seconds);
-  header.stamp.nanosec = static_cast<std::uint32_t>(acquisition_time - seconds);
-  header.frame_id = frame_id;
-
-  auto msg{std::make_unique<sensor_msgs::msg::Image>()};
-  msg->header = header;
-  msg->height = static_cast<std::uint32_t>(image->GetHeight());
-  msg->width = static_cast<std::uint32_t>(image->GetWidth());
-  msg->encoding = encoding_pattern;
-  msg->step = static_cast<std::uint32_t>(image->GetStride());
-
-  const size_t image_size = image->GetImageSize();
-  msg->data.resize(static_cast<std::uint32_t>(image_size));
-  std::copy_n(static_cast<std::uint8_t *>(
-      image->GetData()), image_size, msg->data.data());
-  return msg;
 }
 
 Spinnaker::PixelFormatEnums CameraWrapper::convert_to_pixel_format_enum(
@@ -166,40 +125,25 @@ Spinnaker::PixelFormatEnums CameraWrapper::convert_to_pixel_format_enum(
   throw std::invalid_argument("Unknown pixel format.");
 }
 
-std::string CameraWrapper::convert_to_pixel_format_string(
-  Spinnaker::PixelFormatEnums pixel_format)
+Spinnaker::TriggerSourceEnums CameraWrapper::convert_to_trigger_source_enum(const int line_source)
 {
-  switch (pixel_format) {
-    case Spinnaker::PixelFormatEnums::PixelFormat_BayerRG8:
-      return CameraSettings::kPixelFormatStr_RGGB8;
-      break;
-    case Spinnaker::PixelFormatEnums::PixelFormat_BayerGR8:
-      return CameraSettings::kPixelFormatStr_GRBG8;
-      break;
-    case Spinnaker::PixelFormatEnums::PixelFormat_BayerGB8:
-      return CameraSettings::kPixelFormatStr_GBRG8;
-      break;
-    case Spinnaker::PixelFormatEnums::PixelFormat_BayerBG8:
-      return CameraSettings::kPixelFormatStr_BGGR8;
-      break;
-    case Spinnaker::PixelFormatEnums::PixelFormat_RGB8:
-      return CameraSettings::kPixelFormatStr_RGB8;
-      break;
-    case Spinnaker::PixelFormatEnums::PixelFormat_BGR8:
-      return CameraSettings::kPixelFormatStr_BGR8;
-      break;
-    case Spinnaker::PixelFormatEnums::PixelFormat_Mono8:
-      return CameraSettings::kPixelFormatStr_MONO8;
-      break;
-    default:
-      throw std::invalid_argument("Unknown pixel format.");
+  if (line_source == 0) {
+    return Spinnaker::TriggerSource_Line0;
   }
-  return {};
+  if (line_source == 1) {
+    return Spinnaker::TriggerSource_Line1;
+  }
+  if (line_source == 2) {
+    return Spinnaker::TriggerSource_Line2;
+  }
+  if (line_source == 3) {
+    return Spinnaker::TriggerSource_Line3;
+  }
+  throw std::invalid_argument("Unknown line source.");
 }
 
 /// Configure a Spinnaker camera.
-void CameraWrapper::configure_camera(
-  const CameraSettings & camera_settings)
+void CameraWrapper::configure_camera(const CameraSettings & camera_settings)
 {
   // Make sure this camera does not send callbacks while it is being configured.
   bool camera_should_capture{m_camera_is_capturing};
@@ -216,8 +160,8 @@ void CameraWrapper::configure_camera(
   m_camera->Height.SetValue(camera_settings.get_window_height());
 
   auto IsAvailableAndWritable = [](const Spinnaker::GenApi::IBase & value) {
-      return IsAvailable(value) && IsWritable(value);
-    };
+    return IsAvailable(value) && IsWritable(value);
+  };
 
   if (IsAvailable(m_camera->DeviceType)) {
     if (m_camera->DeviceType.GetCurrentEntry()->GetSymbolic() == "GEV") {
@@ -229,11 +173,9 @@ void CameraWrapper::configure_camera(
       }
     }
   }
-  if (IsAvailableAndWritable(m_camera->AcquisitionFrameRateEnable))
-  {
+  if (IsAvailableAndWritable(m_camera->AcquisitionFrameRateEnable)) {
     m_camera->AcquisitionFrameRateEnable.SetValue(true);
-    if(IsAvailableAndWritable(m_camera->AcquisitionFrameRate))
-    {
+    if (IsAvailableAndWritable(m_camera->AcquisitionFrameRate)) {
       m_camera->AcquisitionFrameRate.SetValue(camera_settings.get_fps());
     }
   }
@@ -244,10 +186,36 @@ void CameraWrapper::configure_camera(
     throw std::invalid_argument("Cannot set pixel format.");
   }
   if (IsAvailableAndWritable(m_camera->AcquisitionMode)) {
-    m_camera->AcquisitionMode.SetValue(
-      Spinnaker::AcquisitionModeEnums::AcquisitionMode_Continuous);
+    m_camera->AcquisitionMode.SetValue(Spinnaker::AcquisitionModeEnums::AcquisitionMode_Continuous);
   } else {
     throw std::invalid_argument("Cannot set continuous acquisition mode.");
+  }
+
+  if (m_camera->TriggerMode.GetAccessMode() != Spinnaker::GenApi::RW) {
+    throw std::invalid_argument("Unable to disable trigger mode.");
+  } else {
+    m_camera->TriggerMode.SetValue(Spinnaker::TriggerMode_Off);
+  }
+
+  if (camera_settings.get_use_external_trigger()) {
+    if (m_camera->TriggerSource.GetAccessMode() != Spinnaker::GenApi::RW) {
+      throw std::invalid_argument("Unable to set trigger mode (node retrieval).");
+    } else {
+      m_camera->TriggerSource.SetValue(
+        convert_to_trigger_source_enum(camera_settings.get_trigger_line_source()));
+    }
+
+    if (m_camera->TriggerMode.GetAccessMode() != Spinnaker::GenApi::RW) {
+      throw std::invalid_argument("Unable to disable trigger mode.");
+    } else {
+      m_camera->TriggerMode.SetValue(Spinnaker::TriggerMode_On);
+    }
+  }
+
+  if (m_camera->AutoExposureGainUpperLimit.GetAccessMode() != Spinnaker::GenApi::RW) {
+    throw std::invalid_argument("Cannot set gain upper limit.");
+  } else {
+    m_camera->AutoExposureGainUpperLimit.SetValue(camera_settings.get_gain_upper_limit());
   }
 
   m_is_camera_configured = true;

@@ -12,10 +12,20 @@
 #
 #     SPINNAKER::SPINNAKER
 
-find_path(SPINNAKER_INCLUDE_DIR
-  NAMES spinnaker/Spinnaker.h
+find_path(SPINNAKER_INCLUDE_DIR NAMES
+  Spinnaker.h
+  PATHS
+  /usr/include/spinnaker/
+  /usr/local/include/spinnaker/
+  /opt/spinnaker/include/
 )
-find_library(SPINNAKER_LIBRARY NAMES Spinnaker)
+
+find_library(SPINNAKER_LIBRARY NAMES Spinnaker
+  PATHS
+  /usr/lib
+  /usr/local/lib
+  /opt/spinnaker/lib
+)
 
 mark_as_advanced(SPINNAKER_FOUND SPINNAKER_INCLUDE_DIR SPINNAKER_LIBRARY)
 
