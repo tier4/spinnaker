@@ -71,6 +71,7 @@ private:
   std::vector<spinnaker::CameraSettings> m_settings{};
   std::vector<ProtectedPublisher> m_publishers{};
   bool m_use_publisher_per_camera{};
+  bool m_use_camera_timestamp{};
 };
 
 class SpinnakerCameraNode::ProtectedPublisher

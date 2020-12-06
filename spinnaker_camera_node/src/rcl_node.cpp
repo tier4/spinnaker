@@ -48,6 +48,7 @@ SpinnakerCameraNode::SpinnakerCameraNode(const rclcpp::NodeOptions & node_option
   }
   const std::string one_publisher_per_camera_param{"one_publisher_per_camera"};
   m_use_publisher_per_camera = declare_parameter(one_publisher_per_camera_param, false);
+  m_use_camera_timestamp = declare_parameter("use_camera_timestamp", false);
   m_publishers = create_publishers(this, number_of_cameras, m_use_publisher_per_camera);
   if (m_publishers.empty()) {
     // TODO(igor): this should really be a terminate. It is a post-condition violation.
@@ -164,8 +165,12 @@ std::unique_ptr<sensor_msgs::msg::Image> SpinnakerCameraNode::convert_to_image_m
   const std::string encoding_pattern = convert_to_pixel_format_string(image->GetPixelFormat());
   const auto seconds = acquisition_time / kNanoSecondsInSecond;
   std_msgs::msg::Header header;
-  header.stamp.sec = static_cast<std::int32_t>(seconds);
-  header.stamp.nanosec = static_cast<std::uint32_t>(acquisition_time - seconds);
+  if (m_use_camera_timestamp) {
+    header.stamp.sec = static_cast<std::int32_t>(seconds);
+    header.stamp.nanosec = static_cast<std::uint32_t>(acquisition_time - seconds);
+  } else {
+    header.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
+  }
   header.frame_id = frame_id;
 
   auto msg{std::make_unique<sensor_msgs::msg::Image>()};

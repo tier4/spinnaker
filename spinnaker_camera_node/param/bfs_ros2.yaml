@@ -20,6 +20,7 @@ spinnaker_camera_node:
     # If true, there is going to be a publisher with a different topic per camera.
     # Otherwise a single publisher will be reused for all cameras.
     one_publisher_per_camera: true
+    use_camera_timestamp: false
     camera_settings:
       camera:
         window_width: 1440
