@@ -14,6 +14,7 @@
 
 #include <spinnaker_camera_driver/camera_list_wrapper.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <iostream>
@@ -45,9 +46,15 @@ CameraListWrapper::CameraListWrapper(
   if (camera_settings.size() != m_camera_list.GetSize()) {
     throw std::logic_error("Number of settings does not match the number of available cameras.");
   }
+  auto fi = std::find_if(
+      camera_settings.begin(), camera_settings.end(),
+      [](CameraSettings cs) { return (cs.get_serial_number() == 0); });
+  bool use_serial = (fi == camera_settings.end());
   for (std::uint32_t camera_index = 0; camera_index < m_camera_list.GetSize(); ++camera_index) {
     auto camera_ptr =
-      m_camera_list.GetBySerial(std::to_string(camera_settings[camera_index].get_serial_number()));
+        use_serial ? m_camera_list.GetBySerial(std::to_string(
+                         camera_settings[camera_index].get_serial_number()))
+                   : m_camera_list.GetByIndex(camera_index);
     if (!camera_ptr) {
       throw std::runtime_error(
         "Cannot find a camera whose serial number is " +
