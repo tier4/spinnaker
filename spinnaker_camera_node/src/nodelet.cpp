@@ -114,9 +114,18 @@ spinnaker::CameraListWrapper & SpinnakerCameraNodelet::createCameras(
     std::string camera_info_url = "";
     if (camera_setting["camera_info_url"].getType() == XmlRpc::XmlRpcValue::TypeString)
       camera_info_url = static_cast<std::string>(camera_setting["camera_info_url"]);
+    int device_link_throughput_limit = 100000000;
+    if (camera_setting["device_link_throughput_limit"].getType() == XmlRpc::XmlRpcValue::TypeInt)
+      device_link_throughput_limit = static_cast<int>(camera_setting["device_link_throughput_limit"]);
+    bool use_external_trigger = false;
+    if (camera_setting["use_external_trigger"].getType() == XmlRpc::XmlRpcValue::TypeBoolean)
+      use_external_trigger = static_cast<bool>(camera_setting["use_external_trigger"]);
+    int trigger_line_source = 0;
+    if (camera_setting["trigger_line_source"].getType() == XmlRpc::XmlRpcValue::TypeInt)
+      trigger_line_source = static_cast<int>(camera_setting["trigger_line_source"]);
     settings_.emplace_back(
       camera_name, window_width, window_height, fps, pixel_format, frame_id, serial_number,
-      camera_info_url);
+      camera_info_url, device_link_throughput_limit, use_external_trigger, trigger_line_source);
   }
   NODELET_INFO("Configuring %lu cameras.", settings_.size());
   spinnaker_wrapper->create_cameras(settings_);
