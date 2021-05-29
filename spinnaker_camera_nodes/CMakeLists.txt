@@ -15,16 +15,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 ### Build the nodes
-project(spinnaker_camera_node)
-
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+project(spinnaker_camera_nodes)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -40,14 +31,17 @@ find_package(SPINNAKER)
 
 if(SPINNAKER_FOUND)
   ament_auto_find_build_dependencies()
-  ament_auto_add_library(${PROJECT_NAME} SHARED
-    "include/spinnaker_camera_node/spinnaker_camera_node.hpp"
+  ament_auto_add_library(spinnaker_camera_node SHARED
+    "include/spinnaker_camera_nodes/spinnaker_camera_node.hpp"
     "src/spinnaker_camera_node.cpp")
-  autoware_set_compile_options(${PROJECT_NAME})
+  autoware_set_compile_options(spinnaker_camera_node)
 
-  rclcpp_components_register_node(${PROJECT_NAME}
+  target_compile_options(spinnaker_camera_node PRIVATE -Wno-extra
+    -Wno-ignored-qualifiers -Wno-old-style-cast -Wno-overloaded-virtual)
+
+  rclcpp_components_register_node(spinnaker_camera_node
     PLUGIN "autoware::drivers::camera::SpinnakerCameraNode"
-    EXECUTABLE ${PROJECT_NAME}_exe
+    EXECUTABLE spinnaker_camera_node_exe
   )
 
   ## Testing
@@ -61,7 +55,7 @@ if(SPINNAKER_FOUND)
     )
   endif()
 else()
-  message(WARNING "SPINNAKER SDK not found, so spinnaker_camera_node could not be built.")
+  message(WARNING "SPINNAKER SDK not found, so spinnaker_camera_nodes could not be built.")
 endif()
 
 ament_auto_package(
