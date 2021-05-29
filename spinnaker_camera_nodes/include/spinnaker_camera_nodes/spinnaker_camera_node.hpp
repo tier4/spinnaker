@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SPINNAKER_CAMERA_NODE__SPINNAKER_CAMERA_NODE_HPP_
-#define SPINNAKER_CAMERA_NODE__SPINNAKER_CAMERA_NODE_HPP_
+#ifndef SPINNAKER_CAMERA_NODES__SPINNAKER_CAMERA_NODE_HPP_
+#define SPINNAKER_CAMERA_NODES__SPINNAKER_CAMERA_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/publisher.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <spinnaker_camera_driver/system_wrapper.hpp>
-#include <spinnaker_camera_node/visibility_control.hpp>
+#include <spinnaker_camera_nodes/visibility_control.hpp>
 
 #include <memory>
 #include <string>
@@ -33,7 +33,7 @@ namespace drivers
 namespace camera
 {
 
-class SPINNAKER_CAMERA_NODE_PUBLIC SpinnakerCameraNode : public ::rclcpp::Node
+class SPINNAKER_CAMERA_NODES_PUBLIC SpinnakerCameraNode : public ::rclcpp::Node
 {
 public:
   /// ROS 2 parameter contructor.
@@ -43,19 +43,19 @@ public:
 
 private:
   /// A wrapper around a publisher that handles proper multithreading protection.
-  class SPINNAKER_CAMERA_NODE_LOCAL ProtectedPublisher;
+  class SPINNAKER_CAMERA_NODES_LOCAL ProtectedPublisher;
 
   /// This funciton is called to publish an image.
-  SPINNAKER_CAMERA_NODE_LOCAL void publish_image(
+  SPINNAKER_CAMERA_NODES_LOCAL void publish_image(
     std::uint32_t camera_index,
     std::unique_ptr<sensor_msgs::msg::Image> image);
 
   /// Helper function to parse camera-related params and create cameras from them.
-  SPINNAKER_CAMERA_NODE_LOCAL spinnaker::CameraListWrapper & create_cameras_from_params(
+  SPINNAKER_CAMERA_NODES_LOCAL spinnaker::CameraListWrapper & create_cameras_from_params(
     spinnaker::SystemWrapper * spinnaker_wrapper);
 
   /// Helper function to create publishers.
-  SPINNAKER_CAMERA_NODE_LOCAL static std::vector<ProtectedPublisher> create_publishers(
+  SPINNAKER_CAMERA_NODES_LOCAL static std::vector<ProtectedPublisher> create_publishers(
     ::rclcpp::Node * node,
     size_t number_of_cameras,
     bool use_publisher_per_camera);
@@ -84,4 +84,4 @@ private:
 }  // namespace drivers
 }  // namespace autoware
 
-#endif  // SPINNAKER_CAMERA_NODE__SPINNAKER_CAMERA_NODE_HPP_
+#endif  // SPINNAKER_CAMERA_NODES__SPINNAKER_CAMERA_NODE_HPP_

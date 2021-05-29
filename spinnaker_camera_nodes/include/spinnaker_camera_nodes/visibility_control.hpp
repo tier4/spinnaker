@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SPINNAKER_CAMERA_NODE__VISIBILITY_CONTROL_HPP_
-#define SPINNAKER_CAMERA_NODE__VISIBILITY_CONTROL_HPP_
+#ifndef SPINNAKER_CAMERA_NODES__VISIBILITY_CONTROL_HPP_
+#define SPINNAKER_CAMERA_NODES__VISIBILITY_CONTROL_HPP_
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(__WIN32)
-  #if defined(SPINNAKER_CAMERA_NODE_BUILDING_DLL) || defined(SPINNAKER_CAMERA_NODE_EXPORTS)
-    #define SPINNAKER_CAMERA_NODE_PUBLIC __declspec(dllexport)
-    #define SPINNAKER_CAMERA_NODE_LOCAL
-  #else  // defined(SPINNAKER_CAMERA_NODE_BUILDING_DLL) || defined(SPINNAKER_CAMERA_NODE_EXPORTS)
-    #define SPINNAKER_CAMERA_NODE_PUBLIC __declspec(dllimport)
-    #define SPINNAKER_CAMERA_NODE_LOCAL
-  #endif  // defined(SPINNAKER_CAMERA_NODE_BUILDING_DLL) || defined(SPINNAKER_CAMERA_NODE_EXPORTS)
+  #if defined(SPINNAKER_CAMERA_NODES_BUILDING_DLL) || defined(SPINNAKER_CAMERA_NODES_EXPORTS)
+    #define SPINNAKER_CAMERA_NODES_PUBLIC __declspec(dllexport)
+    #define SPINNAKER_CAMERA_NODES_LOCAL
+  #else  // defined(SPINNAKER_CAMERA_NODES_BUILDING_DLL) || defined(SPINNAKER_CAMERA_NODES_EXPORTS)
+    #define SPINNAKER_CAMERA_NODES_PUBLIC __declspec(dllimport)
+    #define SPINNAKER_CAMERA_NODES_LOCAL
+  #endif  // defined(SPINNAKER_CAMERA_NODES_BUILDING_DLL) || defined(SPINNAKER_CAMERA_NODES_EXPORTS)
 #elif defined(__linux__)
-  #define SPINNAKER_CAMERA_NODE_PUBLIC __attribute__((visibility("default")))
-  #define SPINNAKER_CAMERA_NODE_LOCAL __attribute__((visibility("hidden")))
+  #define SPINNAKER_CAMERA_NODES_PUBLIC __attribute__((visibility("default")))
+  #define SPINNAKER_CAMERA_NODES_LOCAL __attribute__((visibility("hidden")))
 #elif defined(__APPLE__)
-  #define SPINNAKER_CAMERA_NODE_PUBLIC __attribute__((visibility("default")))
-  #define SPINNAKER_CAMERA_NODE_LOCAL __attribute__((visibility("hidden")))
+  #define SPINNAKER_CAMERA_NODES_PUBLIC __attribute__((visibility("default")))
+  #define SPINNAKER_CAMERA_NODES_LOCAL __attribute__((visibility("hidden")))
 #else  // defined(_LINUX)
   #error "Unsupported Build Configuration"
 #endif  // defined(_WINDOWS)
 
-#endif  // SPINNAKER_CAMERA_NODE__VISIBILITY_CONTROL_HPP_
+#endif  // SPINNAKER_CAMERA_NODES__VISIBILITY_CONTROL_HPP_

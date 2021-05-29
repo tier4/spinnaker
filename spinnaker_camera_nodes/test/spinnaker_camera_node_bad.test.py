@@ -18,20 +18,19 @@ import ament_index_python
 import launch
 import launch.actions
 import launch_ros.actions
-from launch_ros.default_launch_description import ROSSpecificLaunchStartup
 import launch_testing
 import launch_testing.util
 
 
-def generate_test_description(ready_fn):
+def generate_test_description():
     # The node under test and the checker node that will pass/fail our tests:
     test_topic = "spinnaker_camera_node_test_topic"
-    spinnaker_camera_node = launch_ros.actions.LifecycleNode(
-        package="spinnaker_camera_node",
-        node_executable="spinnaker_camera_node_exe",
+    spinnaker_camera_node = launch_ros.actions.Node(
+        package="spinnaker_camera_nodes",
+        executable="spinnaker_camera_node_exe",
         parameters=[
             "{}/param/spinnaker_camera_test.param.yaml".format(
-                ament_index_python.get_package_share_directory("spinnaker_camera_node")
+                ament_index_python.get_package_share_directory("spinnaker_camera_nodes")
             ),
             {}
         ]
@@ -40,12 +39,11 @@ def generate_test_description(ready_fn):
     context = {'cam_node': spinnaker_camera_node}
 
     return launch.LaunchDescription([
-        ROSSpecificLaunchStartup(),
         spinnaker_camera_node,
         # Need to keep the launch alive by having an alive process
         launch_testing.util.KeepAliveProc(),
         # Start tests right away - no need to wait for anything
-        launch.actions.OpaqueFunction(function=lambda context: ready_fn())]
+        launch_testing.actions.ReadyToTest()]
     ), context
 
 
