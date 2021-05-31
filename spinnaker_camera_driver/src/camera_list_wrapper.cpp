@@ -43,14 +43,14 @@ CameraListWrapper::CameraListWrapper(
   Spinnaker::CameraList camera_list, const std::vector<CameraSettings> & camera_settings)
 : m_camera_list{camera_list}
 {
-  if (camera_settings.size() != m_camera_list.GetSize()) {
-    throw std::logic_error("Number of settings does not match the number of available cameras.");
+  if (camera_settings.size() > m_camera_list.GetSize()) {
+    throw std::logic_error("Number of settings is greater than the number of available cameras.");
   }
   auto fi = std::find_if(
-      camera_settings.begin(), camera_settings.end(),
-      [](CameraSettings cs) { return (cs.get_serial_number() == 0); });
+      camera_settings.cbegin(), camera_settings.cend(),
+      [](const CameraSettings & cs) { return (cs.get_serial_number() == 0); });
   bool use_serial = (fi == camera_settings.end());
-  for (std::uint32_t camera_index = 0; camera_index < m_camera_list.GetSize(); ++camera_index) {
+  for (std::uint32_t camera_index = 0; camera_index < camera_settings.size(); ++camera_index) {
     auto camera_ptr =
         use_serial ? m_camera_list.GetBySerial(std::to_string(
                          camera_settings[camera_index].get_serial_number()))
