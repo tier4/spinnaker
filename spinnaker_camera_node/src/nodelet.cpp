@@ -53,7 +53,8 @@ void SpinnakerCameraNodelet::onInit()
     image_publishers_.emplace_back(it_->advertiseCamera(
       settings_.at(i).get_camera_name() + "/image_raw", 1, itssc, itssc, rssc, rssc));
     camera_info_managers_.emplace_back(std::make_shared<camera_info_manager::CameraInfoManager>(
-      pnh_, settings_.at(i).get_camera_name(), settings_.at(i).get_camera_info_url()));
+      ros::NodeHandle{pnh_, settings_.at(i).get_camera_name()},
+      settings_.at(i).get_camera_name(), settings_.at(i).get_camera_info_url()));
   }
 
   cameras.set_image_callback(std::bind(
