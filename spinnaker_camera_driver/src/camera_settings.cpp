@@ -48,20 +48,30 @@ const std::set<std::string> CameraSettings::kValidPixelFormats {
 
 
 CameraSettings::CameraSettings(
+  const std::string & camera_name,
   std::uint32_t window_width,
   std::uint32_t window_height,
-  common::types::float64_t fps,
+  float fps,
   const std::string & pixel_format,
   const std::string & frame_id,
   const std::string & serial_number,
-  std::int64_t device_link_throughput_limit)
-: m_window_width{window_width},
+  const std::string & camera_info_url,
+  std::int64_t device_link_throughput_limit,
+  bool use_external_trigger,
+  std::uint32_t trigger_line_source,
+  float gain_upper_limit)
+: m_camera_name{camera_name},
+  m_window_width{window_width},
   m_window_height{window_height},
   m_pixel_format{pixel_format},
   m_frame_id{frame_id},
   m_serial_number{serial_number},
+  m_camera_info_url{camera_info_url},
   m_fps{fps},
-  m_device_link_throughput_limit{device_link_throughput_limit}
+  m_device_link_throughput_limit{device_link_throughput_limit},
+  m_use_external_trigger{use_external_trigger},
+  m_trigger_line_source{trigger_line_source},
+  m_gain_upper_limit{gain_upper_limit}
 {
   if (m_window_width < 1 || m_window_height < 1) {
     throw std::invalid_argument("Window size setting cannot be 0.");

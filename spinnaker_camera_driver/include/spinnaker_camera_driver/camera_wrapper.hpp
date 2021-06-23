@@ -98,6 +98,8 @@ private:
   static Spinnaker::PixelFormatEnums convert_to_pixel_format_enum(const std::string & pixel_format);
   /// Convert Spinnaker PixelFormat enum to string.
   static std::string convert_to_pixel_format_string(Spinnaker::PixelFormatEnums pixel_format);
+  /// Convert line number to Spinnaker TriggerSource enum.
+  static Spinnaker::TriggerSourceEnums convert_to_trigger_source_enum(const uint32_t line_source);
 
   /// Index of the current camera.
   std::uint32_t m_camera_index{};

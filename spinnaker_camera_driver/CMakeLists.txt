@@ -19,6 +19,13 @@ project(spinnaker_camera_driver)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
+endif()
+
 ## dependencies
 find_package(ament_cmake_auto REQUIRED)
 find_package(SPINNAKER)
@@ -35,7 +42,6 @@ if(SPINNAKER_FOUND)
     "src/camera_settings.cpp"
     "src/camera_wrapper.cpp"
     "src/camera_list_wrapper.cpp")
-  autoware_set_compile_options(${PROJECT_NAME})
   ## SPINNAKER is not handled by ament, so we need the manual steps below.
   target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${SPINNAKER_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME} ${SPINNAKER_LIBRARIES})

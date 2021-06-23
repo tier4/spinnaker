@@ -166,6 +166,23 @@ Spinnaker::PixelFormatEnums CameraWrapper::convert_to_pixel_format_enum(
   throw std::invalid_argument("Unknown pixel format.");
 }
 
+Spinnaker::TriggerSourceEnums CameraWrapper::convert_to_trigger_source_enum(const uint32_t line_source)
+{
+  if (line_source == 0) {
+    return Spinnaker::TriggerSource_Line0;
+  }
+  if (line_source == 1) {
+    return Spinnaker::TriggerSource_Line1;
+  }
+  if (line_source == 2) {
+    return Spinnaker::TriggerSource_Line2;
+  }
+  if (line_source == 3) {
+    return Spinnaker::TriggerSource_Line3;
+  }
+  throw std::invalid_argument("Unknown line source.");
+}
+
 std::string CameraWrapper::convert_to_pixel_format_string(
   Spinnaker::PixelFormatEnums pixel_format)
 {
@@ -210,6 +227,7 @@ void CameraWrapper::configure_camera(
   using Spinnaker::GenApi::IsAvailable;
   using Spinnaker::GenApi::IsWritable;
   using Spinnaker::GenApi::IsReadable;
+  using Spinnaker::GenApi::RW;
 
   m_frame_id = camera_settings.get_frame_id();
 
@@ -258,6 +276,33 @@ void CameraWrapper::configure_camera(
       Spinnaker::AcquisitionModeEnums::AcquisitionMode_Continuous);
   } else {
     throw std::invalid_argument("Cannot set continuous acquisition mode.");
+  }
+
+  if (m_camera->TriggerMode.GetAccessMode() != RW) {
+    throw std::invalid_argument("Unable to disable trigger mode.");
+  } else {
+    m_camera->TriggerMode.SetValue(Spinnaker::TriggerMode_Off);
+  }
+
+  if (camera_settings.get_use_external_trigger()) {
+    if (m_camera->TriggerSource.GetAccessMode() != RW) {
+      throw std::invalid_argument("Unable to set trigger mode (node retrieval).");
+    } else {
+      m_camera->TriggerSource.SetValue(
+        convert_to_trigger_source_enum(camera_settings.get_trigger_line_source()));
+    }
+
+    if (m_camera->TriggerMode.GetAccessMode() != RW) {
+      throw std::invalid_argument("Unable to disable trigger mode.");
+    } else {
+      m_camera->TriggerMode.SetValue(Spinnaker::TriggerMode_On);
+    }
+  }
+
+  if (m_camera->AutoExposureGainUpperLimit.GetAccessMode() != RW) {
+    throw std::invalid_argument("Cannot set gain upper limit.");
+  } else {
+    m_camera->AutoExposureGainUpperLimit.SetValue(camera_settings.get_gain_upper_limit());
   }
 
   m_is_camera_configured = true;

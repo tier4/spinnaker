@@ -15,7 +15,6 @@
 #ifndef SPINNAKER_CAMERA_DRIVER__CAMERA_SETTINGS_HPP_
 #define SPINNAKER_CAMERA_DRIVER__CAMERA_SETTINGS_HPP_
 
-#include <common/types.hpp>
 #include <spinnaker_camera_driver/visibility_control.hpp>
 
 #include <string>
@@ -46,28 +45,41 @@ public:
 
   /// Instantiate settings and throw if they are not valid.
   explicit CameraSettings(
+    const std::string & camera_name,
     std::uint32_t window_width,
     std::uint32_t window_height,
-    common::types::float64_t fps,
+    float fps,
     const std::string & pixel_format,
     const std::string & frame_id = "camera",
     const std::string & serial_number = "",
-    std::int64_t device_link_throughput_limit = 100000000L);
+    const std::string & camera_info_url = "",
+    std::int64_t device_link_throughput_limit = 100000000L,
+    bool use_external_trigger = false,
+    uint32_t trigger_line_source = 0u,
+    float gain_upper_limit = 18.0);
 
+  inline const std::string & get_camera_name() const noexcept {return m_camera_name;}
   inline std::uint32_t get_window_width() const noexcept {return m_window_width;}
   inline std::uint32_t get_window_height() const noexcept {return m_window_height;}
   inline const std::string & get_pixel_format() const noexcept {return m_pixel_format;}
   inline const std::string & get_frame_id() const noexcept {return m_frame_id;}
+  inline float get_fps() const noexcept {return m_fps;}
   inline const std::string & get_serial_number() const noexcept {return m_serial_number;}
-  inline common::types::float64_t get_fps() const noexcept {return m_fps;}
+  inline const std::string & get_camera_info_url() const noexcept {return m_camera_info_url;}
   inline std::int64_t get_device_link_throughput_limit() const noexcept
   {
     return m_device_link_throughput_limit;
   }
+  inline bool get_use_external_trigger() const noexcept {return m_use_external_trigger;}
+  inline int get_trigger_line_source() const noexcept {return m_trigger_line_source;}
+  inline float get_gain_upper_limit() const noexcept {return m_gain_upper_limit;}
 
 private:
   /// A set of all valid pixel formats.
   static const std::set<std::string> kValidPixelFormats;
+
+  /// Camera name.
+  std::string m_camera_name;
 
   /// Width of the returned image.
   std::uint32_t m_window_width;
@@ -83,11 +95,23 @@ private:
   /// Camera serial number.
   std::string m_serial_number;
 
+  /// Camera info url.
+  std::string m_camera_info_url;
+
   /// Wanted fps.
-  common::types::float64_t m_fps;
+  float m_fps;
 
   /// Desired device link throuput limit.
   std::int64_t m_device_link_throughput_limit;
+
+  /// Flag to use external trigger
+  bool m_use_external_trigger;
+
+  /// Line source for external trigger
+  std::uint32_t m_trigger_line_source;
+
+  /// Upper limit of gain
+  float m_gain_upper_limit;
 };
 
 }  //  namespace spinnaker
