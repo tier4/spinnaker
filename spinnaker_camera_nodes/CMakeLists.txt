@@ -34,7 +34,6 @@ if(SPINNAKER_FOUND)
   ament_auto_add_library(spinnaker_camera_node SHARED
     "include/spinnaker_camera_nodes/spinnaker_camera_node.hpp"
     "src/spinnaker_camera_node.cpp")
-  autoware_set_compile_options(spinnaker_camera_node)
 
   target_compile_options(spinnaker_camera_node PRIVATE -Wno-extra
     -Wno-ignored-qualifiers -Wno-old-style-cast -Wno-overloaded-virtual)
@@ -49,10 +48,10 @@ if(SPINNAKER_FOUND)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
 
-    add_ros_test(
-      test/spinnaker_camera_node_bad.test.py
-      TIMEOUT "10"
-    )
+    # add_ros_test(
+    #   test/spinnaker_camera_node_bad.test.py
+    #   TIMEOUT "10"
+    # )
   endif()
 else()
   message(WARNING "SPINNAKER SDK not found, so spinnaker_camera_nodes could not be built.")

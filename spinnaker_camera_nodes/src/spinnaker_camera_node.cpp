@@ -34,8 +34,6 @@ std::string create_camera_topic_name(std::uint32_t camera_index)
 
 }  // namespace
 
-using autoware::common::types::float64_t;
-
 namespace
 {
 static constexpr const char kDefaultCameraFrame[] = "camera";
@@ -64,12 +62,14 @@ SpinnakerCameraNode::SpinnakerCameraNode(
   }
   const std::string one_publisher_per_camera_param{"one_publisher_per_camera"};
   m_use_publisher_per_camera = declare_parameter(one_publisher_per_camera_param, false);
+  m_use_camera_timestamp = declare_parameter("use_camera_timestamp", false);
   m_publishers = create_publishers(this, number_of_cameras, m_use_publisher_per_camera);
   if (m_publishers.empty()) {
     // TODO(igor): this should really be a terminate. It is a post-condition violation.
     throw std::runtime_error("No publishers created. Cannot start node.");
   }
-  cameras.set_image_callback(std::bind(
+  cameras.set_image_callback(
+    std::bind(
       &SpinnakerCameraNode::publish_image, this, std::placeholders::_1, std::placeholders::_2));
   cameras.start_capturing();
 }
@@ -81,17 +81,28 @@ spinnaker::CameraListWrapper & SpinnakerCameraNode::create_cameras_from_params(
     // TODO(igor): this should really be a terminate. It is a pre-condition violation.
     throw std::runtime_error("The Spinnaker Wrapper is not initialized.");
   }
-  const auto settings_from_params = [this](const std::string & prefix) {
-      const auto prefix_dot = prefix + '.';
+  const auto settings_from_params =
+    [this](const std::string & setting_name, const std::string & camera_name = "") {
+      const auto prefix_dot = camera_name.empty() ? setting_name + '.' : setting_name + '.' +
+        camera_name + '.';
       // Declare and init optional params.
       const auto camera_frame_id_param{
         declare_parameter(prefix_dot + "frame_id", std::string{kDefaultCameraFrame})};
       const auto camera_serial_number_param{
         declare_parameter(prefix_dot + "serial_number", std::string{kCameraSerial})};
+      const auto camera_info_url_param{
+        declare_parameter(prefix_dot + "camera_info_url", "")};
       const auto device_link_throughput_limit_param{
         declare_parameter(
           prefix_dot + "device_link_throughput_limit", kDefaultDeviceThroughputLimit)};
+      const auto use_external_trigger_param{
+        declare_parameter(prefix_dot + "use_external_trigger", false)};
+      const auto trigger_line_source_param{
+        static_cast<uint32_t>(declare_parameter(prefix_dot + "trigger_line_source", 0))};
+      const auto gain_upper_limit_param{
+        static_cast<float>(declare_parameter(prefix_dot + "gain_upper_limit", 18.0))};
       return spinnaker::CameraSettings{
+      camera_name,
       static_cast<std::uint32_t>(
         declare_parameter(prefix_dot + "window_width").get<std::uint64_t>()),
       static_cast<std::uint32_t>(
@@ -100,7 +111,11 @@ spinnaker::CameraListWrapper & SpinnakerCameraNode::create_cameras_from_params(
       declare_parameter(prefix_dot + "pixel_format").template get<std::string>(),
       camera_frame_id_param,
       camera_serial_number_param,
-      device_link_throughput_limit_param};
+      camera_info_url_param,
+      device_link_throughput_limit_param,
+      use_external_trigger_param,
+      trigger_line_source_param,
+      gain_upper_limit_param};
     };
 
   const std::string camera_settings_param_name{"camera_settings"};
@@ -113,14 +128,14 @@ spinnaker::CameraListWrapper & SpinnakerCameraNode::create_cameras_from_params(
     spinnaker_wrapper->create_cameras(
       settings_from_params(camera_settings_param_name));
   } else {
-    std::vector<spinnaker::CameraSettings> settings;
-    std::transform(camera_names.begin(), camera_names.end(), std::back_inserter(settings),
+    std::transform(
+      camera_names.begin(), camera_names.end(), std::back_inserter(m_settings),
       [&camera_settings_param_name, &settings_from_params](
         const std::string & name) -> spinnaker::CameraSettings {
-        return settings_from_params(camera_settings_param_name + "." + name);
+        return settings_from_params(camera_settings_param_name, name);
       });
-    RCLCPP_INFO(get_logger(), "Configuring %lu cameras.", settings.size());
-    spinnaker_wrapper->create_cameras(settings);
+    RCLCPP_INFO(get_logger(), "Configuring %lu cameras.", m_settings.size());
+    spinnaker_wrapper->create_cameras(m_settings);
   }
   return spinnaker_wrapper->get_cameras();
 }
@@ -140,7 +155,12 @@ SpinnakerCameraNode::create_publishers(
   std::vector<ProtectedPublisher> publishers(number_of_publishers);
   for (auto i = 0U; i < number_of_publishers; ++i) {
     publishers[i].set_publisher(
-      node->create_publisher<sensor_msgs::msg::Image>(create_camera_topic_name(i), 10));
+      std::make_shared<image_transport::CameraPublisher>(
+        image_transport::create_camera_publisher(
+          node, m_settings.at(i).get_camera_name() + "/image_raw", rmw_qos_profile_sensor_data)));
+    const auto camera_info_manager = std::make_shared<camera_info_manager::CameraInfoManager>(node);
+    camera_info_manager->loadCameraInfo(m_settings.at(i).get_camera_info_url());
+    publishers[i].set_camera_info_manager(camera_info_manager);
   }
   return publishers;
 }
@@ -152,13 +172,20 @@ void SpinnakerCameraNode::publish_image(
 {
   const auto publisher_index = m_use_publisher_per_camera ? camera_index : 0UL;
   if (image) {
+    if (!m_use_camera_timestamp) {image->header.stamp = this->now();}
     m_publishers.at(publisher_index).publish(std::move(image));
   }
 }
 
-void SpinnakerCameraNode::ProtectedPublisher::set_publisher(PublisherT::SharedPtr publisher)
+void SpinnakerCameraNode::ProtectedPublisher::set_publisher(std::shared_ptr<PublisherT> publisher)
 {
   m_publisher = publisher;
+}
+
+void SpinnakerCameraNode::ProtectedPublisher::set_camera_info_manager(
+  std::shared_ptr<InfoManagerT> camera_info_manager)
+{
+  m_camera_info_manager = camera_info_manager;
 }
 
 void SpinnakerCameraNode::ProtectedPublisher::publish(
@@ -167,7 +194,10 @@ void SpinnakerCameraNode::ProtectedPublisher::publish(
   if (m_publisher) {
     const std::lock_guard<std::mutex> lock{m_publish_mutex};
     if (image) {
-      m_publisher->publish(std::move(image));
+      std::unique_ptr<sensor_msgs::msg::CameraInfo> camera_info(
+        new sensor_msgs::msg::CameraInfo(m_camera_info_manager->getCameraInfo()));
+      camera_info->header = image->header;
+      m_publisher->publish(std::move(image), std::move(camera_info));
     }
   } else {
     throw std::runtime_error("Publisher is nullptr, cannot publish.");

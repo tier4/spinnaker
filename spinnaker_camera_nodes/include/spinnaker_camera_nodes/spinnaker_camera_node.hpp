@@ -15,9 +15,13 @@
 #ifndef SPINNAKER_CAMERA_NODES__SPINNAKER_CAMERA_NODE_HPP_
 #define SPINNAKER_CAMERA_NODES__SPINNAKER_CAMERA_NODE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include <camera_info_manager/camera_info_manager.hpp>
+#include <image_transport/image_transport.hpp>
 #include <rclcpp/publisher.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
+
 #include <spinnaker_camera_driver/system_wrapper.hpp>
 #include <spinnaker_camera_nodes/visibility_control.hpp>
 
@@ -55,29 +59,35 @@ private:
     spinnaker::SystemWrapper * spinnaker_wrapper);
 
   /// Helper function to create publishers.
-  SPINNAKER_CAMERA_NODES_LOCAL static std::vector<ProtectedPublisher> create_publishers(
+  SPINNAKER_CAMERA_NODES_LOCAL std::vector<ProtectedPublisher> create_publishers(
     ::rclcpp::Node * node,
     size_t number_of_cameras,
     bool use_publisher_per_camera);
 
   std::unique_ptr<spinnaker::SystemWrapper> m_spinnaker_wrapper{};
+  std::vector<spinnaker::CameraSettings> m_settings{};
   std::vector<ProtectedPublisher> m_publishers{};
   bool m_use_publisher_per_camera{};
+  bool m_use_camera_timestamp{};
 };
 
 class SpinnakerCameraNode::ProtectedPublisher
 {
-  using PublisherT = ::rclcpp::Publisher<::sensor_msgs::msg::Image>;
+  using PublisherT = image_transport::CameraPublisher;
+  using InfoManagerT = camera_info_manager::CameraInfoManager;
 
 public:
   /// Co-share ownership of a rclcpp publisher.
-  void set_publisher(PublisherT::SharedPtr publisher);
+  void set_publisher(std::shared_ptr<PublisherT> publisher);
+  /// Set camera info manager.
+  void set_camera_info_manager(std::shared_ptr<InfoManagerT> camera_info_manager);
   /// Publish an image.
   void publish(std::unique_ptr<sensor_msgs::msg::Image> image);
 
 private:
   std::mutex m_publish_mutex{};
-  PublisherT::SharedPtr m_publisher{};
+  std::shared_ptr<PublisherT> m_publisher{};
+  std::shared_ptr<InfoManagerT> m_camera_info_manager{};
 };
 
 }  // namespace camera
