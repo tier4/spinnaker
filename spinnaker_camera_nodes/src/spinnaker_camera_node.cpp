@@ -104,11 +104,11 @@ spinnaker::CameraListWrapper & SpinnakerCameraNode::create_cameras_from_params(
       return spinnaker::CameraSettings{
       camera_name,
       static_cast<std::uint32_t>(
-        declare_parameter(prefix_dot + "window_width").get<std::uint64_t>()),
+        declare_parameter<int64_t>(prefix_dot + "window_width")),
       static_cast<std::uint32_t>(
-        declare_parameter(prefix_dot + "window_height").get<std::uint64_t>()),
-      declare_parameter(prefix_dot + "fps").template get<float64_t>(),
-      declare_parameter(prefix_dot + "pixel_format").template get<std::string>(),
+        declare_parameter<int64_t>(prefix_dot + "window_height")),
+      static_cast<float>(declare_parameter<float64_t>(prefix_dot + "fps")),
+      declare_parameter<std::string>(prefix_dot + "pixel_format"),
       camera_frame_id_param,
       camera_serial_number_param,
       camera_info_url_param,
